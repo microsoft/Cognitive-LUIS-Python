@@ -153,15 +153,16 @@ class LUISClient(object):
             return
         response_handlers[u'on_success'](res)
 
-    def reply(self, text, response, response_handlers=None, daemon=False):
+    def reply(self, text, response, response_handlers=None, force_set_parameter_name=None, daemon=False):
         '''
         Routes the reply routine to either sync or async
         based on the presence or absence of a callback fucntion.
         :param text: The text to be analysed and predicted.
-        :param response: A LUISResponse that contains the context Id.
+        :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
         whose values are two functions
         to be executed if async.
+        :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :param daemon: Defines whether the new thread used for async will be daemon or not.
         :return: A LUISResponse object if sync, a thread object to control the thread if async.
         '''
@@ -173,31 +174,35 @@ class LUISClient(object):
         if not self._preview:
             raise Exception(u"Can't use reply unless in the preview mode")
         if response_handlers is None:
-            return self.reply_sync(text, response)
+            return self.reply_sync(text, response, force_set_parameter_name)
         else:
-            return self.reply_async(text, response, response_handlers, daemon)
+            return self.reply_async(text, response, response_handlers, force_set_parameter_name, daemon)
 
-    def reply_sync(self, text, response):
+    def reply_sync(self, text, response, force_set_parameter_name=None):
         '''
         Replies synchronously and returns a LUISResponse object.
         :param text: The text to be analysed and predicted.
+        :param response: A LUISResponse object that contains the context Id.
+        :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :return: A LUISResponse object containg the response data.
         '''
         try:
             conn = httplib.HTTPSConnection(self._LUISURL)
-            conn.request(u'GET', self._reply_url_gen(text, response))
+            conn.request(u'GET', self._reply_url_gen(text, response, force_set_parameter_name))
             res = conn.getresponse()
             return LUISResponse(res.read().decode(u'UTF-8'))
         except Exception:
             raise
 
-    def reply_async(self, text, response, response_handlers, daemon):
+    def reply_async(self, text, response, response_handlers, force_set_parameter_name, daemon):
         '''
         Predicts asynchronously and executes a callback function at the end.
         :param text: The text to be analysed and predicted.
+        :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
         whose values are two functions
         to be executed if async.
+        :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :param daemon: Defines whether the new thread used will be daemon or not.
         :return: A thread object to give control over the thread.
         '''
@@ -206,23 +211,27 @@ class LUISClient(object):
         if u'on_failure' not in response_handlers:
             raise KeyError(u'You have to specify the failure handler with key: "on_failure"')
         reply_thread = threading.Thread(target=self._reply_async_helper
-                                        , args=(text, response, response_handlers))
+                                        , args=(text, response, response_handlers, force_set_parameter_name))
         reply_thread.daemon = daemon
         reply_thread.start()
         return reply_thread
 
-    def _reply_url_gen(self, text, response):
+    def _reply_url_gen(self, text, response, force_set_parameter_name):
         '''
         Generates the suitable LUIS API reply url.
         :param text: The text to be analysed and predicted.
         :param response: A LUISResponse object that contains the context Id.
+        :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :return: LUIS API reply url.
         '''
-        return self._ReplyMask%(self._preview_url, self._app_id, self._app_key
+        url = self._ReplyMask%(self._preview_url, self._app_id, self._app_key
                                 , response.get_dialog().get_context_id()
                                 , self._verbose_url, quote(text))
+        if force_set_parameter_name is not None:
+            url += u'&forceset=%s'%(force_set_parameter_name)
+        return url
 
-    def _reply_async_helper(self, text, response, response_handlers):
+    def _reply_async_helper(self, text, response, response_handlers, force_set_parameter_name):
         '''
         A wrapper function to be executed asynchronously in an external thread.
         It executes the reply routine and then executes a callback function.
@@ -230,11 +239,12 @@ class LUISClient(object):
         :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
         whose values are two functions to be executed if async.
+        :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :return: None.
         '''
         res = None
         try:
-            res = self.reply(text, response)
+            res = self.reply(text, response, force_set_parameter_name)
         except Exception, exc:
             response_handlers[u'on_failure'](exc)
             return
