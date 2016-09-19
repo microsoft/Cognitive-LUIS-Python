@@ -66,7 +66,7 @@ try:
     res = CLIENT.predict(TEXT)
     while res.get_dialog() is not None and not res.get_dialog().is_finished():
         TEXT = raw_input(u'%s\n'%res.get_dialog().get_prompt())
-        res = CLIENT.reply(TEXT,res)
+        res = CLIENT.reply(TEXT, res)
     process_res(res)
 except Exception, exc:
     print(exc)
