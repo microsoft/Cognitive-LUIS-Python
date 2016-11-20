@@ -43,15 +43,14 @@ class LUISClient(object):
     Starts the prediction procedure for the user's text, and accepts a callback function
     '''
     _LUISURL = u'api.projectoxford.ai'
-    _PredictMask = u'/luis/v1/application%s?id=%s&subscription-key=%s&verbose=%s&q=%s'
-    _ReplyMask = u'/luis/v1/application%s?id=%s&subscription-key=%s&contextid=%s&verbose=%s&q=%s'
+    _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s'
+    _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s'
 
-    def __init__(self, app_id, app_key, preview=False, verbose=False):
+    def __init__(self, app_id, app_key, verbose=True):
         '''
         A constructor for the LUISClient class.
         :param app_id: A string containing the application id.
         :param app_key: A string containing the subscription key.
-        :param preview: A boolean to indicate whether the preview version should used or not.
         :param verbose: A boolean to indicate whether the verbose version should used or not.
         '''
         if app_id is None:
@@ -69,9 +68,7 @@ class LUISClient(object):
 
         self._app_id = app_id
         self._app_key = app_key
-        self._preview = True if preview else False
-        self._preview_url = u'/preview' if preview else u''
-        self._verbose_url = u'true' if verbose else u'false'
+        self._verbose = u'true' if verbose else u'false'
 
     def predict(self, text, response_handlers=None, daemon=False):
         '''
@@ -132,8 +129,7 @@ class LUISClient(object):
         :param text: The text to be analysed and predicted.
         :return: LUIS API predicton url.
         '''
-        return self._PredictMask%(self._preview_url, self._app_id, self._app_key
-                                  , self._verbose_url, quote(text))
+        return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose)
 
     def _predict_async_helper(self, text, response_handlers):
         '''
@@ -171,8 +167,6 @@ class LUISClient(object):
         text = text.strip()
         if not text:
             raise ValueError(u'Empty text to predict')
-        if not self._preview:
-            raise Exception(u"Can't use reply unless in the preview mode")
         if response_handlers is None:
             return self.reply_sync(text, response, force_set_parameter_name)
         else:
@@ -224,9 +218,8 @@ class LUISClient(object):
         :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
         :return: LUIS API reply url.
         '''
-        url = self._ReplyMask%(self._preview_url, self._app_id, self._app_key
-                                , response.get_dialog().get_context_id()
-                                , self._verbose_url, quote(text))
+        url = self._ReplyMask%(self._app_id, self._app_key, quote(text)
+                                , response.get_dialog().get_context_id(), self._verbose)
         if force_set_parameter_name is not None:
             url += u'&forceset=%s'%(force_set_parameter_name)
         return url

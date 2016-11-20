@@ -62,7 +62,7 @@ try:
     APPID = raw_input(u'Please enter your app Id:\n')
     APPKEY = raw_input(u'Please input your subscription key:\n')
     TEXT = raw_input(u'Please input the text to predict:\n')
-    CLIENT = LUISClient(APPID, APPKEY, True, True)
+    CLIENT = LUISClient(APPID, APPKEY, True)
     res = CLIENT.predict(TEXT)
     while res.get_dialog() is not None and not res.get_dialog().is_finished():
         TEXT = raw_input(u'%s\n'%res.get_dialog().get_prompt())

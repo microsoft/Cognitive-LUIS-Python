@@ -72,7 +72,7 @@ try:
     APPID = raw_input(u'Please enter your app Id:\n')
     APPKEY = raw_input(u'Please input your subscription key:\n')
     TEXT = raw_input(u'Please input the text to predict:\n')
-    CLIENT = LUISClient(APPID, APPKEY, True, True)
+    CLIENT = LUISClient(APPID, APPKEY, True)
     CLIENT.predict(TEXT, {u'on_success': on_success, u'on_failure': on_failure})
     print u'-------\nMain thread finishing!!\n-------'
 except Exception, exc:
