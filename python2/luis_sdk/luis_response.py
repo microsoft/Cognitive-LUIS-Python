@@ -76,11 +76,13 @@ class LUISResponse(object):
         self._entities = []
         self._composite_entities = []
 
-        if u'topScoringIntent' in JSONResponse:
-            self._intents.append(LUISIntent(response[u'topScoringIntent']))
-        else:
+        self._top_scoring_intent = LUISIntent(response[u'topScoringIntent'])
+        
+        if u'intents' in response:
             for intent in response[u'intents']:
                 self._intents.append(LUISIntent(intent))
+        else:
+            self._intents.append(self._top_scoring_intent)
 
         for entity in response[u'entities']:
             self._entities.append(LUISEntity(entity))
@@ -101,7 +103,7 @@ class LUISResponse(object):
         A getter for the response's top scoring intent.
         :return: Response's top scoring intent.
         '''
-        return self._intents[0]
+        return self._top_scoring_intent
 
     def get_intents(self):
         '''
