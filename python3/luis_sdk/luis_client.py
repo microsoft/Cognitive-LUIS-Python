@@ -224,7 +224,7 @@ class LUISClient:
             url += '&forceset=%s'%(force_set_parameter_name)
         return url
 
-    def _reply_async_helper(self, text, response, response_handlers):
+    def _reply_async_helper(self, text, response, response_handlers, force_set_parameter_name):
         '''
         A wrapper function to be executed asynchronously in an external thread.
         It executes the reply routine and then executes a callback function.
