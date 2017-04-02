@@ -42,7 +42,7 @@ class LUISClient:
     Constructs a LUISClient with the corresponding user's App Id and Subscription Keys
     Starts the prediction procedure for the user's text, and accepts a callback function
     '''
-    _LUISURL = 'api.projectoxford.ai'
+    _LUISURL = 'westus.api.cognitive.microsoft.com'
     _PredictMask = '/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s'
     _ReplyMask = '/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s'
 
