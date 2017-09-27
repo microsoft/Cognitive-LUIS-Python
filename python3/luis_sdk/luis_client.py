@@ -35,6 +35,8 @@ import threading
 from urllib.parse import quote
 import http.client
 from .luis_response import LUISResponse
+import os
+import re
 
 class LUISClient:
     '''
@@ -90,6 +92,19 @@ class LUISClient:
         else:
             return self.predict_async(text, response_handlers, daemon)
 
+    def _get_proxy(self):
+        proxy = os.getenv('https_proxy') or os.getenv('http_proxy')
+        return re.sub(r'https?://', '', proxy).split(':')
+
+    def _create_connection(self):
+        proxy = self._get_proxy()
+        if proxy:
+            conn = http.client.HTTPSConnection(proxy[0], proxy[1])
+            conn.set_tunnel(self._LUISURL)
+        else:
+            conn = http.client.HTTPSConnection(self._LUISURL)
+        return conn
+
     def predict_sync(self, text):
         '''
         Predicts synchronously and returns a LUISResponse.
@@ -97,7 +112,7 @@ class LUISClient:
         :return: A LUISResponse object containing the response data.
         '''
         try:
-            conn = http.client.HTTPSConnection(self._LUISURL)
+            conn = self._create_connection()
             conn.request('GET', self._predict_url_gen(text))
             res = conn.getresponse()
             return LUISResponse(res.read().decode('UTF-8'))
@@ -181,7 +196,7 @@ class LUISClient:
         :return: A LUISResponse object containg the response data.
         '''
         try:
-            conn = http.client.HTTPSConnection(self._LUISURL)
+            conn = self._create_connection()
             conn.request('GET', self._reply_url_gen(text, response, force_set_parameter_name))
             res = conn.getresponse()
             return LUISResponse(res.read().decode('UTF-8'))
