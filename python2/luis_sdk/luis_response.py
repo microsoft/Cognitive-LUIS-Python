@@ -58,7 +58,7 @@ class LUISResponse(object):
             try:
                 response = json.loads(JSONResponse)
             except Exception:
-                raise Exception(u'Error in parsing json')
+                raise Exception(u'Error in parsing json "%s"' % JSONResponse)
         else:
             response = JSONResponse
 

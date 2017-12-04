@@ -43,16 +43,17 @@ class LUISClient(object):
     Starts the prediction procedure for the user's text, and accepts a callback function
     '''
     _LUISURLMASK = u'%s.api.cognitive.microsoft.com'
-    _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s'
-    _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s'
+    _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s&staging=%s'
+    _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s&staging=%s'
 
-    def __init__(self, app_id, app_key, region, verbose=True):
+    def __init__(self, app_id, app_key, region, verbose=True, use_production_slot=True):
         '''
         A constructor for the LUISClient class.
         :param app_id: A string containing the application id.
         :param app_key: A string containing the subscription key.
         :param region: A string containing the region of the subscription.
         :param verbose: A boolean to indicate whether the verbose version should used or not.
+        :param use_production_slot: A boolean to indicate whether to use the production slot.
         '''
         if app_id is None:
             raise TypeError(u'NULL App Id')
@@ -77,6 +78,7 @@ class LUISClient(object):
         self._app_key = app_key
         self._region = region
         self._verbose = u'true' if verbose else u'false'
+        self._use_staging_slot = u'false' if use_production_slot else u'true'
 
     def predict(self, text, response_handlers=None, daemon=False):
         '''
@@ -137,7 +139,7 @@ class LUISClient(object):
         :param text: The text to be analysed and predicted.
         :return: LUIS API prediction url.
         '''
-        return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose)
+        return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose, self._use_staging_slot)
 
     def _predict_async_helper(self, text, response_handlers):
         '''
@@ -226,7 +228,7 @@ class LUISClient(object):
         :return: LUIS API reply url.
         '''
         url = self._ReplyMask%(self._app_id, self._app_key, quote(text)
-                                , response.get_dialog().get_context_id(), self._verbose)
+                                , response.get_dialog().get_context_id(), self._verbose, self._use_staging_slot)
         if force_set_parameter_name is not None:
             url += u'&forceset=%s'%(force_set_parameter_name)
         return url

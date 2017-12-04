@@ -73,7 +73,7 @@ try:
     APPKEY = input('Please input your subscription key:\n')
     REGION = input('Please input your region:\n')
     TEXT = input('Please input the text to predict:\n')
-    CLIENT = LUISClient(APPID, APPKEY, REGION, True)
+    CLIENT = LUISClient(APPID, APPKEY, REGION, True, True)
     CLIENT.predict(TEXT, {'on_success': on_success, 'on_failure': on_failure})
     print('-------\nMain thread finishing!!\n-------')
 except Exception as exc:
