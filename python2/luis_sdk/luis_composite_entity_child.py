@@ -40,7 +40,7 @@ class LUISCompositeEntityChild:
     def __init__(self, composite_entity_child):
         '''
         A constructor for the LUISCompositeEntityChild class.
-        :param composite_entity: A dictionary containing the composite entity child data.
+        :param composite_entity_child: A dictionary containing the composite entity child data.
         '''
         self._type = composite_entity_child['type']
         self._value = composite_entity_child['value']

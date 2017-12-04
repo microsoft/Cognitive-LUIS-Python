@@ -33,8 +33,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 class LUISParameterValue(object):
     '''
-    LUIS Paramater Value Class.
-    Describes the LUIS Paramter Value structure.
+    LUIS Parameter Value Class.
+    Describes the LUIS Parameter Value structure.
     '''
 
     def __init__(self, parameter_value):
