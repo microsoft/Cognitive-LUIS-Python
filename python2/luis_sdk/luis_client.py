@@ -39,18 +39,19 @@ from .luis_response import LUISResponse
 class LUISClient(object):
     '''
     This is the interface of the LUIS
-    Constructs a LUISClient with the corresponding user's App Id and Subscription Keys
+    Constructs a LUISClient with the corresponding user's App Id, region Subscription Keys
     Starts the prediction procedure for the user's text, and accepts a callback function
     '''
-    _LUISURL = u'westus.api.cognitive.microsoft.com'
+    _LUISURLMASK = u'%s.api.cognitive.microsoft.com'
     _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s'
     _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s'
 
-    def __init__(self, app_id, app_key, verbose=True):
+    def __init__(self, app_id, app_key, region, verbose=True):
         '''
         A constructor for the LUISClient class.
         :param app_id: A string containing the application id.
         :param app_key: A string containing the subscription key.
+        :param region: A string containing the region of the subscription.
         :param verbose: A boolean to indicate whether the verbose version should used or not.
         '''
         if app_id is None:
@@ -65,9 +66,16 @@ class LUISClient(object):
             raise ValueError(u'Empty Subscription Key')
         if u' ' in app_key:
             raise ValueError(u'Invalid Subscription Key')
+        if region is None:
+            raise TypeError(u'NULL Region')
+        if not region:
+            raise ValueError(u'Empty Region')
+        if ' ' in region:
+            raise ValueError(u'Invalid Region')
 
         self._app_id = app_id
         self._app_key = app_key
+        self._region = region
         self._verbose = u'true' if verbose else u'false'
 
     def predict(self, text, response_handlers=None, daemon=False):
@@ -97,7 +105,7 @@ class LUISClient(object):
         :return: A LUISResponse object containing the response data.
         '''
         try:
-            conn = httplib.HTTPSConnection(self._LUISURL)
+            conn = httplib.HTTPSConnection(self._LUISURLMASK % self._region)
             conn.request(u'GET', self._predict_url_gen(text))
             res = conn.getresponse()
             return LUISResponse(res.read().decode(u'UTF-8'))
@@ -181,7 +189,7 @@ class LUISClient(object):
         :return: A LUISResponse object containg the response data.
         '''
         try:
-            conn = httplib.HTTPSConnection(self._LUISURL)
+            conn = httplib.HTTPSConnection(self._LUISURLMASK % self._region)
             conn.request(u'GET', self._reply_url_gen(text, response, force_set_parameter_name))
             res = conn.getresponse()
             return LUISResponse(res.read().decode(u'UTF-8'))
