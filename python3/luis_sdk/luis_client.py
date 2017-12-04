@@ -81,7 +81,7 @@ class LUISClient:
     def predict(self, text, response_handlers=None, daemon=False):
         '''
         Routes the prediction routine to either sync or async
-        based on the presence or absence of a callback fucntion.
+        based on the presence or absence of a callback function.
         :param text: the text to be analysed and predicted.
         :param response_handlers: a dictionary that contains two keys on_success and on_failure,
         whose values are two functions to be executed if async.
@@ -135,7 +135,7 @@ class LUISClient:
         '''
         Returns the suitable LUIS API predict url.
         :param text: The text to be analysed and predicted.
-        :return: LUIS API predicton url.
+        :return: LUIS API prediction url.
         '''
         return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose)
 
@@ -144,7 +144,6 @@ class LUISClient:
         A wrapper function to be executed asynchronously in an external thread.
         It executes the predict routine and then executes a callback function.
         :param text: The text to be analysed and predicted.
-        :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
         whose values are two functions to be executed if async.
         :return: None.
@@ -160,7 +159,7 @@ class LUISClient:
     def reply(self, text, response, response_handlers=None, force_set_parameter_name=None, daemon=False):
         '''
         Routes the reply routine to either sync or async
-        based on the presence or absence of a callback fucntion.
+        based on the presence or absence of a callback function.
         :param text: The text to be analysed and predicted.
         :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
@@ -186,7 +185,7 @@ class LUISClient:
         :param text: The text to be analysed and predicted.
         :param response: A LUISResponse object that contains the context Id.
         :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
-        :return: A LUISResponse object containg the response data.
+        :return: A LUISResponse object containing the response data.
         '''
         try:
             conn = http.client.HTTPSConnection(self._LUISURLMASK % self._region)
@@ -232,7 +231,7 @@ class LUISClient:
             url += '&forceset=%s'%(force_set_parameter_name)
         return url
 
-    def _reply_async_helper(self, text, response, response_handlers):
+    def _reply_async_helper(self, text, response, response_handlers, force_set_parameter_name):
         '''
         A wrapper function to be executed asynchronously in an external thread.
         It executes the reply routine and then executes a callback function.
