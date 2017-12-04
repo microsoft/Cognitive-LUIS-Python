@@ -40,7 +40,7 @@ class LUISDialog(object):
     def __init__(self, dialog):
         '''
         A constructor for the LUISDialog class.
-        :param action: A dictionary containing the dialog data.
+        :param dialog: A dictionary containing the dialog data.
         '''
         if u'prompt' in dialog:
             self._prompt = dialog[u'prompt']

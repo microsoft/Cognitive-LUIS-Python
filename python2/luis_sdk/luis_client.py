@@ -39,19 +39,21 @@ from .luis_response import LUISResponse
 class LUISClient(object):
     '''
     This is the interface of the LUIS
-    Constructs a LUISClient with the corresponding user's App Id and Subscription Keys
+    Constructs a LUISClient with the corresponding user's App Id, region Subscription Keys
     Starts the prediction procedure for the user's text, and accepts a callback function
     '''
-    _LUISURL = u'westus.api.cognitive.microsoft.com'
-    _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s'
-    _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s'
+    _LUISURLMASK = u'%s.api.cognitive.microsoft.com'
+    _PredictMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&verbose=%s&staging=%s'
+    _ReplyMask = u'/luis/v2.0/apps/%s?subscription-key=%s&q=%s&contextid=%s&verbose=%s&staging=%s'
 
-    def __init__(self, app_id, app_key, verbose=True):
+    def __init__(self, app_id, app_key, region, verbose=True, use_production_slot=True):
         '''
         A constructor for the LUISClient class.
         :param app_id: A string containing the application id.
         :param app_key: A string containing the subscription key.
+        :param region: A string containing the region of the subscription.
         :param verbose: A boolean to indicate whether the verbose version should used or not.
+        :param use_production_slot: A boolean to indicate whether to use the production slot.
         '''
         if app_id is None:
             raise TypeError(u'NULL App Id')
@@ -65,15 +67,23 @@ class LUISClient(object):
             raise ValueError(u'Empty Subscription Key')
         if u' ' in app_key:
             raise ValueError(u'Invalid Subscription Key')
+        if region is None:
+            raise TypeError(u'NULL Region')
+        if not region:
+            raise ValueError(u'Empty Region')
+        if ' ' in region:
+            raise ValueError(u'Invalid Region')
 
         self._app_id = app_id
         self._app_key = app_key
+        self._region = region
         self._verbose = u'true' if verbose else u'false'
+        self._use_staging_slot = u'false' if use_production_slot else u'true'
 
     def predict(self, text, response_handlers=None, daemon=False):
         '''
         Routes the prediction routine to either sync or async
-        based on the presence or absence of a callback fucntion.
+        based on the presence or absence of a callback function.
         :param text: the text to be analysed and predicted.
         :param response_handlers: a dictionary that contains two keys on_success and on_failure,
         whose values are two functions to be executed if async.
@@ -97,7 +107,7 @@ class LUISClient(object):
         :return: A LUISResponse object containing the response data.
         '''
         try:
-            conn = httplib.HTTPSConnection(self._LUISURL)
+            conn = httplib.HTTPSConnection(self._LUISURLMASK % self._region)
             conn.request(u'GET', self._predict_url_gen(text))
             res = conn.getresponse()
             return LUISResponse(res.read().decode(u'UTF-8'))
@@ -127,16 +137,15 @@ class LUISClient(object):
         '''
         Returns the suitable LUIS API predict url.
         :param text: The text to be analysed and predicted.
-        :return: LUIS API predicton url.
+        :return: LUIS API prediction url.
         '''
-        return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose)
+        return self._PredictMask%(self._app_id, self._app_key, quote(text), self._verbose, self._use_staging_slot)
 
     def _predict_async_helper(self, text, response_handlers):
         '''
         A wrapper function to be executed asynchronously in an external thread.
         It executes the predict routine and then executes a callback function.
         :param text: The text to be analysed and predicted.
-        :param response: A LUISResponse that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
         whose values are two functions to be executed if async.
         :return: None.
@@ -152,7 +161,7 @@ class LUISClient(object):
     def reply(self, text, response, response_handlers=None, force_set_parameter_name=None, daemon=False):
         '''
         Routes the reply routine to either sync or async
-        based on the presence or absence of a callback fucntion.
+        based on the presence or absence of a callback function.
         :param text: The text to be analysed and predicted.
         :param response: A LUISResponse object that contains the context Id.
         :param response_handlers: A dictionary that contains two keys on_success and on_failure,
@@ -178,10 +187,10 @@ class LUISClient(object):
         :param text: The text to be analysed and predicted.
         :param response: A LUISResponse object that contains the context Id.
         :param force_set_parameter_name: The name of a parameter the needs to be reset in dialog.
-        :return: A LUISResponse object containg the response data.
+        :return: A LUISResponse object containing the response data.
         '''
         try:
-            conn = httplib.HTTPSConnection(self._LUISURL)
+            conn = httplib.HTTPSConnection(self._LUISURLMASK % self._region)
             conn.request(u'GET', self._reply_url_gen(text, response, force_set_parameter_name))
             res = conn.getresponse()
             return LUISResponse(res.read().decode(u'UTF-8'))
@@ -219,7 +228,7 @@ class LUISClient(object):
         :return: LUIS API reply url.
         '''
         url = self._ReplyMask%(self._app_id, self._app_key, quote(text)
-                                , response.get_dialog().get_context_id(), self._verbose)
+                                , response.get_dialog().get_context_id(), self._verbose, self._use_staging_slot)
         if force_set_parameter_name is not None:
             url += u'&forceset=%s'%(force_set_parameter_name)
         return url

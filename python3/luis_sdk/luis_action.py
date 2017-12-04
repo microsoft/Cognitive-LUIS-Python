@@ -60,7 +60,7 @@ class LUISAction:
     def get_triggered(self):
         '''
         A getter for the action's triggered flag.
-        :return: A boolean that expresses whether the action was trigerred or not.
+        :return: A boolean that expresses whether the action was triggered or not.
         '''
         return self._triggered
 
